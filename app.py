@@ -29,21 +29,25 @@ def check_setups(df):
     if df is None or df.empty or len(df) < 3:
         return signals
 
-    latest_close = df["Close"].iloc[-1]
-    prev_close = df["Close"].iloc[-2]
-    latest_vwap = df["VWAP"].iloc[-1]
-    prev_vwap = df["VWAP"].iloc[-2]
+    try:
+        latest_close = float(df["Close"].iloc[-1])
+        prev_close = float(df["Close"].iloc[-2])
+        latest_vwap = float(df["VWAP"].iloc[-1])
+        prev_vwap = float(df["VWAP"].iloc[-2])
+    except Exception:
+        return signals  # in case of NaN or bad data
 
     # VWAP Reclaim
-# VWAP Reclaim
     if prev_close < prev_vwap and latest_close > latest_vwap:
         signals.append("VWAP Reclaim")
 
-
     # ORB Breakdown (First 15-min low broken)
-    opening_range_low = df.iloc[:3]["Low"].min()  # first 15-min if 5-min bars
-    if latest["Close"] < opening_range_low:
-        signals.append("ORB Breakdown")
+    try:
+        opening_range_low = float(df.iloc[:3]["Low"].min())
+        if latest_close < opening_range_low:
+            signals.append("ORB Breakdown")
+    except:
+        pass
 
     return signals
 
