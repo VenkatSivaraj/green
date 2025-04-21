@@ -34,20 +34,24 @@ def check_setups(df):
         prev_close = float(df["Close"].iloc[-2])
         latest_vwap = float(df["VWAP"].iloc[-1])
         prev_vwap = float(df["VWAP"].iloc[-2])
-    except Exception:
-        return signals  # in case of NaN or bad data
+        latest_volume = float(df["Volume"].iloc[-1])
+        avg_volume = float(df["Volume"].iloc[-6:-1].mean())  # avg of last 5 bars before latest
+    except:
+        return signals
 
-    # VWAP Reclaim
-    if prev_close < prev_vwap and latest_close > latest_vwap:
-        signals.append("VWAP Reclaim")
-
-    # ORB Breakdown (First 15-min low broken)
+    # VWAP Reclaim (only if not also ORB breakdown and with decent volume)
     try:
         opening_range_low = float(df.iloc[:3]["Low"].min())
-        if latest_close < opening_range_low:
-            signals.append("ORB Breakdown")
+        orb_break = latest_close < opening_range_low
     except:
-        pass
+        orb_break = False
+
+    if not orb_break and prev_close < prev_vwap and latest_close > latest_vwap:
+        if latest_volume > 1.2 * avg_volume:  # 20% higher than average
+            signals.append("VWAP Reclaim")
+
+    if orb_break:
+        signals.append("ORB Breakdown")
 
     return signals
 
